@@ -55,6 +55,20 @@ class WifiPlugin() : FlutterPlugin, MethodCallHandler {
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when (call.method) {
+      "isWifiEnabled" -> {
+        result.success(isWifiEnabled())
+        return
+      }
+      "activateWifi" -> {
+        activateWifi()
+        result.success(null)
+        return
+      }
+      "deactivateWifi" -> {
+        deactivateWifi()
+        result.success(null)
+        return
+      }
       "disconnect" -> {
         when {
           Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
@@ -188,6 +202,19 @@ class WifiPlugin() : FlutterPlugin, MethodCallHandler {
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     channel.setMethodCallHandler(null)
+  }
+
+
+  fun isWifiEnabled(): Boolean {
+    return wifiManager.isWifiEnabled
+  }
+
+  fun activateWifi() {
+    wifiManager.isWifiEnabled = true
+  }
+
+  fun deactivateWifi() {
+    wifiManager.isWifiEnabled = false
   }
 
   @SuppressLint("MissingPermission")
