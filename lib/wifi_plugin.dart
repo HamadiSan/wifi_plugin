@@ -84,6 +84,24 @@ class WifiPlugin {
     return connected;
   }
 
+  /// The [connectUsingYFSDK] method attempts to connect to wifi using the YF SDK
+  /// matching explicitly the [ssid] and [password] parameters. Returns true if the
+  /// connection was successful, false otherwise.
+  /// Note: This method is only available on Android.
+
+  static Future<bool> connectUsingYFSDK(String ssid, String password) async {
+    try {
+      final bool result = await _channel.invokeMethod('connectUsingYFSDK', {
+        'ssid': ssid,
+        'password': password,
+      });
+      return result;
+    } on PlatformException catch (_) {
+      // Handle the exception
+      return false;
+    }
+  }
+
   /// The [disconnect] method disconnects from the wifi network if the network
   /// was connected to using one of the [connect] methods.
   static Future<bool?> disconnect() => _channel.invokeMethod('disconnect');
