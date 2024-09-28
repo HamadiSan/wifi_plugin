@@ -87,7 +87,7 @@ class WifiPlugin {
   /// The [connectUsingYFSDK] method attempts to connect to wifi using the YF SDK
   /// matching explicitly the [ssid] and [password] parameters. Returns true if the
   /// connection was successful, false otherwise.
-  /// Note: This method is only available on Android.
+  /// Note: This method is only available on Android OS built by YF for RK3566 boards.
 
   static Future<bool> connectUsingYFSDK(String ssid, String password) async {
     try {
