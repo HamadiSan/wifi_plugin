@@ -65,6 +65,16 @@ class WifiPlugin() : FlutterPlugin, MethodCallHandler {
         connectUsingYFSDK(ssid, password, result)
         return
       }
+        "activateWifiUsingYFSDK" -> {
+            activateWifiUsingYFSDK()
+            result.success(null)
+            return
+        }
+        "deactivateWifiUsingYFSDK" -> {
+            deactivateWifiUsingYFSDK()
+            result.success(null)
+            return
+        }
       "isWifiEnabled" -> {
         result.success(isWifiEnabled())
         return
@@ -391,12 +401,17 @@ class WifiPlugin() : FlutterPlugin, MethodCallHandler {
     return true
   }
 
-  fun connectUsingYFSDK(ssid: String, password: String, result: Result) {
+  fun connectUsingYFSDK(@NonNull ssid: String, password: String?,@NonNull result: Result) {
     // Send broadcast intent to initiate WiFi connection using SDK
     val intent = Intent("com.android.yf_set_link_wifi")
     intent.putExtra("name", ssid)
-    intent.putExtra("password", password)
+    if (password != null) {
+      intent.putExtra("password", password)
+    }
+//    intent.putExtra("password", password)
     context.sendBroadcast(intent)
+
+    val handler = Handler(Looper.getMainLooper())
 
     // Register a BroadcastReceiver to listen for connection success/failure
     val wifiChangeReceiver = object : BroadcastReceiver() {
@@ -426,11 +441,24 @@ class WifiPlugin() : FlutterPlugin, MethodCallHandler {
     context.registerReceiver(wifiChangeReceiver, intentFilter)
 
     // Add a timeout mechanism to handle cases where the connection attempt takes too long
-    val handler = Handler(Looper.getMainLooper())
     handler.postDelayed({
         result.success(false)
         context?.unregisterReceiver(wifiChangeReceiver)
     }, 30000)  // Timeout after 30 seconds
+}
+
+
+
+  fun activateWifiUsingYFSDK() {
+    val intent = Intent("com.android.yf_set_wifi_switch")
+    intent.putExtra("enable", "true")
+    context.sendBroadcast(intent)
+}
+
+  fun deactivateWifiUsingYFSDK() {
+    val intent = Intent("com.android.yf_set_wifi_switch")
+    intent.putExtra("enable", "false")
+    context.sendBroadcast(intent)
 }
 
 

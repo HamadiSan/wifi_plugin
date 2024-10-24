@@ -102,6 +102,22 @@ class WifiPlugin {
     }
   }
 
+
+
+  /// The [activateWifiUsingYFSDK] method turns on WiFi only works on android.
+  static Future activateWifiUsingYFSDK() async {
+    if (Platform.isAndroid) {
+      await _channel.invokeMethod('activateWifiUsingYFSDK');
+    }
+  }
+
+  /// The [deactivateWifiUsingYFSDK] method turns off wifi only works on android.
+  static Future deactivateWifiUsingYFSDK() async {
+    if (Platform.isAndroid) {
+      await _channel.invokeMethod('deactivateWifiUsingYFSDK');
+    }
+  }
+
   /// The [disconnect] method disconnects from the wifi network if the network
   /// was connected to using one of the [connect] methods.
   static Future<bool?> disconnect() => _channel.invokeMethod('disconnect');
