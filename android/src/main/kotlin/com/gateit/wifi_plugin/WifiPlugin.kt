@@ -55,6 +55,26 @@ class WifiPlugin() : FlutterPlugin, MethodCallHandler {
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when (call.method) {
+      "connectUsingYFSDK" -> {
+        val ssid = call.argument<String>("ssid")
+        val password = call.argument<String>("password")
+        if (ssid == null) {
+          result.error("Invalid Arguments", "SSID must be provided", null)
+          return
+        }
+        connectUsingYFSDK(ssid, password, result)
+        return
+      }
+        "activateWifiUsingYFSDK" -> {
+            activateWifiUsingYFSDK()
+            result.success(null)
+            return
+        }
+        "deactivateWifiUsingYFSDK" -> {
+            deactivateWifiUsingYFSDK()
+            result.success(null)
+            return
+        }
       "isWifiEnabled" -> {
         result.success(isWifiEnabled())
         return
@@ -380,6 +400,67 @@ class WifiPlugin() : FlutterPlugin, MethodCallHandler {
 
     return true
   }
+
+  fun connectUsingYFSDK(@NonNull ssid: String, password: String?,@NonNull result: Result) {
+    // Send broadcast intent to initiate WiFi connection using SDK
+    val intent = Intent("com.android.yf_set_link_wifi")
+    intent.putExtra("name", ssid)
+    if (password != null) {
+      intent.putExtra("password", password)
+    }
+//    intent.putExtra("password", password)
+    context.sendBroadcast(intent)
+
+    val handler = Handler(Looper.getMainLooper())
+
+    // Register a BroadcastReceiver to listen for connection success/failure
+    val wifiChangeReceiver = object : BroadcastReceiver() {
+        var count = 0
+        override fun onReceive(context: Context?, intent: Intent?) {
+            count++
+            val info = intent?.getParcelableExtra<NetworkInfo>(WifiManager.EXTRA_NETWORK_INFO)
+            if (info != null && info.isConnected) {
+                // Compare connected SSID with the intended SSID to verify success
+                if (info.extraInfo == "\"$ssid\"" || getSSID() == "\"$ssid\"") {
+                    result.success(true)
+                    context?.unregisterReceiver(this)
+                    handler.removeCallbacksAndMessages(null)  // Cancel timeout
+                } else if (count > 1) {
+                    // Ignore the first callback if it's not the desired SSID
+                    result.success(false)
+                    context?.unregisterReceiver(this)
+                    handler.removeCallbacksAndMessages(null)  // Cancel timeout
+                }
+            }
+        }
+    }
+
+    // Create an IntentFilter for the expected action indicating network state changes
+    val intentFilter = IntentFilter()
+    intentFilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION)
+    context.registerReceiver(wifiChangeReceiver, intentFilter)
+
+    // Add a timeout mechanism to handle cases where the connection attempt takes too long
+    handler.postDelayed({
+        result.success(false)
+        context?.unregisterReceiver(wifiChangeReceiver)
+    }, 30000)  // Timeout after 30 seconds
+}
+
+
+
+  fun activateWifiUsingYFSDK() {
+    val intent = Intent("com.android.yf_set_wifi_switch")
+    intent.putExtra("enable", "true")
+    context.sendBroadcast(intent)
+}
+
+  fun deactivateWifiUsingYFSDK() {
+    val intent = Intent("com.android.yf_set_wifi_switch")
+    intent.putExtra("enable", "false")
+    context.sendBroadcast(intent)
+}
+
 
   @SuppressLint("MissingPermission")
   @Suppress("DEPRECATION")
